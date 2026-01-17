@@ -10,7 +10,7 @@ class IngresoView:
     def __init__(self, page: ft.Page, db: Session):
         self.page = page
         self.db = db
-        self.page_view = ft.View("/ingresos", controls=[])  # Fix: Crea page_view en __init__
+        self.page_view = ft.View("/ingresos", controls=[])
         self.tabla_ingresos = None
         self.tabla_gastos = None
         self.dropdown_persona = None
@@ -82,7 +82,9 @@ class IngresoView:
                 self.page.show_snack_bar(ft.SnackBar(ft.Text("Completa descripción y monto"), bgcolor=ft.colors.RED))
                 return
             persona_id = int(self.dropdown_persona.value) if self.dropdown_persona.value else None
-            create_ingreso(self.db, desc_ing.value, float(monto_ing.value), cat_educativa_ing.value, persona_id)  
+            create_ingreso(self.db, desc_ing.value, float(monto_ing.value), cat_educativa_ing.value, persona_id)
+            desc_ing.value = monto_ing.value = cat_educativa_ing.value = ""
+            self.page.show_snack_bar(ft.SnackBar(ft.Text("Ingreso agregado"), bgcolor=ft.colors.GREEN))
             self.cargar_ingresos()
 
         def agregar_gasto(e):
@@ -121,7 +123,7 @@ class IngresoView:
             spacing=10
         )
 
-        # Asigna a page_view.controls (Fix AttributeError)
+        # Asigna a page_view.controls
         self.page_view.controls = [layout]
         self.page_view.scroll = ft.ScrollMode.AUTO
 
@@ -171,31 +173,31 @@ class IngresoView:
             dialog = ft.AlertDialog(
                 title=ft.Text("Editar Ingreso"),
                 content=ft.Column([desc_edit, monto_edit, cat_edit, persona_edit], scroll=ft.ScrollMode.AUTO),
-                actions=[ft.ElevatedButton("Guardar", on_click=lambda e: self.save_edit_ingreso(id, desc_edit.value, float(monto_edit.value), cat_edit.value, int(persona_edit.value) if persona_edit.value else None)), ft.TextButton("Cancelar", on_click=lambda e: self.page.close(dialog))]
+                actions=[ft.ElevatedButton("Guardar", on_click=lambda e, dlg=dialog: self.save_edit_ingreso(id, desc_edit.value, float(monto_edit.value), cat_edit.value, int(persona_edit.value) if persona_edit.value else None, dlg)), ft.TextButton("Cancelar", on_click=lambda e, dlg=dialog: self.page.close(dlg))]
             )
             self.page.open(dialog)
 
-    def save_edit_ingreso(self, id, concepto, monto, cat, persona_id):
+    def save_edit_ingreso(self, id, concepto, monto, cat, persona_id, dlg):
         update_ingreso(self.db, id, concepto, monto, cat, persona_id)
-        self.page.close(self.page.dialog)
+        dlg.open = False  # Fix: Cierra el dialog específico
         self.page.show_snack_bar(ft.SnackBar(ft.Text("Ingreso actualizado"), bgcolor=ft.colors.GREEN))
         self.cargar_ingresos()
 
     def delete_ingreso(self, id):
-        def confirm_delete(e):
-            delete_ingreso(self.db, id)
-            self.page.close(dialog)
-            self.page.show_snack_bar(ft.SnackBar(ft.Text("Ingreso eliminado"), bgcolor=ft.colors.ORANGE))
-            self.cargar_ingresos()
-        
         dialog = ft.AlertDialog(
             title=ft.Text("Confirmar"),
             content=ft.Text("¿Eliminar este ingreso?"),
-            actions=[ft.ElevatedButton("Sí", on_click=confirm_delete), ft.TextButton("No", on_click=lambda e: self.page.close(dialog))]
+            actions=[ft.ElevatedButton("Sí", on_click=lambda e, dlg=dialog: self.confirm_delete_ingreso(id, dlg)), ft.TextButton("No", on_click=lambda e, dlg=dialog: self.page.close(dlg))]
         )
         self.page.open(dialog)
 
-    # Métodos para gastos (similares)
+    def confirm_delete_ingreso(self, id, dlg):
+        delete_ingreso(self.db, id)
+        dlg.open = False  # Fix: Cierra el dialog específico
+        self.page.show_snack_bar(ft.SnackBar(ft.Text("Ingreso eliminado"), bgcolor=ft.colors.ORANGE))
+        self.cargar_ingresos()
+
+    # Métodos para gastos (similares a ingresos)
     def edit_gasto(self, id):
         gas = self.db.query(Gasto).filter(Gasto.id == id).first()
         if gas:
@@ -206,26 +208,26 @@ class IngresoView:
             dialog = ft.AlertDialog(
                 title=ft.Text("Editar Gasto"),
                 content=ft.Column([desc_edit, monto_edit, cat_edit, persona_edit], scroll=ft.ScrollMode.AUTO),
-                actions=[ft.ElevatedButton("Guardar", on_click=lambda e: self.save_edit_gasto(id, desc_edit.value, float(monto_edit.value), cat_edit.value, int(persona_edit.value) if persona_edit.value else None)), ft.TextButton("Cancelar", on_click=lambda e: self.page.close(dialog))]
+                actions=[ft.ElevatedButton("Guardar", on_click=lambda e, dlg=dialog: self.save_edit_gasto(id, desc_edit.value, float(monto_edit.value), cat_edit.value, int(persona_edit.value) if persona_edit.value else None, dlg)), ft.TextButton("Cancelar", on_click=lambda e, dlg=dialog: self.page.close(dlg))]
             )
             self.page.open(dialog)
 
-    def save_edit_gasto(self, id, desc, monto, cat, persona_id):
-        update_gasto(self.db, id, desc, monto, cat, persona_id)
-        self.page.close(self.page.dialog)
+    def save_edit_gasto(self, id, concepto, monto, cat, persona_id, dlg):
+        update_gasto(self.db, id, concepto, monto, cat, persona_id)
+        dlg.open = False  # Fix: Cierra el dialog específico
         self.page.show_snack_bar(ft.SnackBar(ft.Text("Gasto actualizado"), bgcolor=ft.colors.GREEN))
         self.cargar_gastos()
 
     def delete_gasto(self, id):
-        def confirm_delete(e):
-            delete_gasto(self.db, id)
-            self.page.close(dialog)
-            self.page.show_snack_bar(ft.SnackBar(ft.Text("Gasto eliminado"), bgcolor=ft.colors.ORANGE))
-            self.cargar_gastos()
-        
         dialog = ft.AlertDialog(
             title=ft.Text("Confirmar"),
             content=ft.Text("¿Eliminar este gasto?"),
-            actions=[ft.ElevatedButton("Sí", on_click=confirm_delete), ft.TextButton("No", on_click=lambda e: self.page.close(dialog))]
+            actions=[ft.ElevatedButton("Sí", on_click=lambda e, dlg=dialog: self.confirm_delete_gasto(id, dlg)), ft.TextButton("No", on_click=lambda e, dlg=dialog: self.page.close(dlg))]
         )
         self.page.open(dialog)
+
+    def confirm_delete_gasto(self, id, dlg):
+        delete_gasto(self.db, id)
+        dlg.open = False  # Fix: Cierra el dialog específico
+        self.page.show_snack_bar(ft.SnackBar(ft.Text("Gasto eliminado"), bgcolor=ft.colors.ORANGE))
+        self.cargar_gastos()

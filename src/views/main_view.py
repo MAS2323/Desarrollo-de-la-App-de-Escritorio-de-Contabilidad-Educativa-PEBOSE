@@ -10,8 +10,8 @@ class MainView:
         self.page = page
         self.page.title = "PEBOSE Contabilidad"
         self.page.theme_mode = ft.ThemeMode.LIGHT
-        self.page.bgcolor = ft.colors.BLUE_50
         self.page.transition = None  # Desactiva transiciones
+        self.page.window_bgcolor = ft.colors.TRANSPARENT  # Fix: Permite imagen de fondo
         self.db = db  # Usa db binded (Session con .query())
         self.current_view = None
         self.home_view = None
@@ -55,7 +55,7 @@ class MainView:
                 expand=1
             )
 
-        # Home content
+        # Home content envuelto en Container con fondo de imagen
         home_column = ft.Column(
             [
                 ft.Text("Bienvenido a la Contabilidad PEBOSE", size=24, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
@@ -69,36 +69,66 @@ class MainView:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
 
+        # Container con imagen de fondo para home
+        home_container = ft.Container(
+            content=home_column,
+            image_src="assets/background_pebose.jpg",  # Reemplaza con tu imagen
+            image_fit=ft.ImageFit.COVER,  # Escala para cubrir
+            image_repeat=ft.ImageRepeat.NO_REPEAT,
+            gradient=ft.LinearGradient(  # Opacidad ligera para legibilidad
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
+                colors=[ft.colors.with_opacity(0.7, ft.colors.WHITE), ft.colors.with_opacity(0.7, ft.colors.BLUE_50)]
+            ),
+            expand=True
+        )
+
         self.home_view = ft.View(
             "/home",
             appbar=create_appbar("/home"),
-            controls=[create_tabs(), home_column],
+            controls=[create_tabs(), home_container],
             vertical_alignment=ft.MainAxisAlignment.CENTER
         )
 
-        # Función de cambio de route
+        # Función de cambio de route (aplica fondo a sub-vistas)
         def route_change(route):
             self.page.views.clear()
             appbar = create_appbar(route)
             tabs = create_tabs()
 
             if self.page.route == "/ingresos":
-                self.current_view = IngresoView(self.page, self.db)  # Pasa self.db binded
+                self.current_view = IngresoView(self.page, self.db)
                 self.current_view.build()
                 self.current_view.page_view.appbar = appbar
                 self.current_view.page_view.controls = [tabs] + self.current_view.page_view.controls
+                # Agrega fondo a la vista
+                self.current_view.page_view.bgcolor = ft.Image(
+                    src="assets/background_pebose.jpg",
+                    fit=ft.ImageFit.COVER,
+                    repeat=ft.ImageRepeat.NO_REPEAT
+                )
                 self.page.views.append(self.current_view.page_view)
             elif self.page.route == "/reportes":
-                self.current_view = ReporteView(self.page, self.db)  # Pasa self.db binded
+                self.current_view = ReporteView(self.page, self.db)
                 self.current_view.build()
                 self.current_view.page_view.appbar = appbar
                 self.current_view.page_view.controls = [tabs] + self.current_view.page_view.controls
+                self.current_view.page_view.bgcolor = ft.Image(
+                    src="assets/background_pebose.jpg",
+                    fit=ft.ImageFit.COVER,
+                    repeat=ft.ImageRepeat.NO_REPEAT
+                )
                 self.page.views.append(self.current_view.page_view)
             elif self.page.route == "/registro":
-                self.current_view = RegistroView(self.page, self.db)  # Pasa self.db binded
+                self.current_view = RegistroView(self.page, self.db)
                 self.current_view.build()
                 self.current_view.page_view.appbar = appbar
                 self.current_view.page_view.controls = [tabs] + self.current_view.page_view.controls
+                self.current_view.page_view.bgcolor = ft.Image(
+                    src="assets/background_pebose.jpg",
+                    fit=ft.ImageFit.COVER,
+                    repeat=ft.ImageRepeat.NO_REPEAT
+                )
                 self.page.views.append(self.current_view.page_view)
             else:  # Home
                 self.page.views.append(self.home_view)
