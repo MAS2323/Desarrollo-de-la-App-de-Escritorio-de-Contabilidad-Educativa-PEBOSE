@@ -58,7 +58,7 @@ class MainView:
         # Home content envuelto en Container con fondo de imagen
         home_column = ft.Column(
             [
-                ft.Text("Bienvenido a la Contabilidad PEBOSE", size=24, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
+                ft.Text("Bienvenido a la Contabilidad PEBOSE", size=40, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER, color=ft.colors.BLUE_900),
                 ft.Divider(),
                 ft.Text("Selecciona una pestaña para navegar.", size=16, text_align=ft.TextAlign.CENTER),
                 ft.Text("Fecha: 17/01/2026", size=12, color=ft.colors.GREY_700, text_align=ft.TextAlign.CENTER),

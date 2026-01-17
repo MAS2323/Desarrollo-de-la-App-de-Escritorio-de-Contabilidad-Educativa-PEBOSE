@@ -43,13 +43,13 @@ def delete_persona(db: Session, persona_id: int):
 # Datos de prueba
 def insertar_datos_prueba(db: Session):
     if db.query(Persona).count() == 0:
-        pruebas = [
-            ("Juan", "Pérez García", "Estudiante", "Primaria"),
-            ("María", "López Nguema", "Estudiante", "Secundaria"),
-            ("Ana", "Mba Obiang", "Estudiante", "Guardería de Infantes"),
-            ("Pedro", "Sánchez Malabo", "Profesor", "Formación Profesional"),
-            ("Luis", "Fernández Elo", "Profesor", "Preescolar")
-        ]
-        for nom, ape, tip, niv in pruebas:
-            create_persona(db, nom, ape, tip, niv)
+        # pruebas = [
+        #     ("Juan", "Pérez García", "Estudiante", "Primaria"),
+        #     ("María", "López Nguema", "Estudiante", "Secundaria"),
+        #     ("Ana", "Mba Obiang", "Estudiante", "Guardería de Infantes"),
+        #     ("Pedro", "Sánchez Malabo", "Profesor", "Formación Profesional"),
+        #     ("Luis", "Fernández Elo", "Profesor", "Preescolar")
+        # ]
+        # for nom, ape, tip, niv in pruebas:
+        #     create_persona(db, nom, ape, tip, niv)
         print("Datos de prueba insertados para PEBOSE.")
