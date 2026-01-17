@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.base import Persona, NivelEducativo
+from models.persona import Persona, NivelEducativo  # Fix: Import desde persona.py (no teacher_student)
 from typing import List
 
 def create_persona(db: Session, nombre: str, apellidos: str, tipo: str, nivel: str):
