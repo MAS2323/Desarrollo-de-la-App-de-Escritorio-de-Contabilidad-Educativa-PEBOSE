@@ -46,14 +46,14 @@ class MainView:
             ]
         )
 
-        # Tabs fijas
+        # Tabs fijas - REPORTES MOVIDO A LA ÚLTIMA POSICIÓN
         self.tabs = ft.Tabs(
             selected_index=0,
             tabs=[
                 ft.Tab(text="Home"),
                 ft.Tab(text="Ingresos/Gastos"),
-                ft.Tab(text="Reportes"),
                 ft.Tab(text="Registro Personas"),
+                ft.Tab(text="Reportes"),
             ],
             on_change=self.on_tab_change,
             expand=False
@@ -119,7 +119,7 @@ class MainView:
     def on_tab_change(self, e):
         """Maneja el cambio de pestaña"""
         index = e.control.selected_index
-        routes = ["/home", "/ingresos", "/reportes", "/registro"]
+        routes = ["/home", "/ingresos", "/registro", "/reportes"]
         if index < len(routes):
             self.page.go(routes[index])
 
@@ -138,8 +138,8 @@ class MainView:
         titles = {
             "/home": "Home",
             "/ingresos": "Ingresos/Gastos",
-            "/reportes": "Reportes",
-            "/registro": "Registro Personas"
+            "/registro": "Registro Personas",
+            "/reportes": "Reportes"
         }
         self.appbar.title = ft.Text(
             titles.get(route, "PEBOSE Contabilidad"),
@@ -151,8 +151,8 @@ class MainView:
         route_to_index = {
             "/home": 0,
             "/ingresos": 1,
-            "/reportes": 2,
-            "/registro": 3
+            "/registro": 2,
+            "/reportes": 3
         }
         index = route_to_index.get(route, 0)
         self.tabs.selected_index = index
@@ -165,14 +165,14 @@ class MainView:
             if not self.ingreso_view.page_view.controls:
                 self.ingreso_view.build()
             self.body_container.content = self.ingreso_view.page_view.controls[0]
-        elif route == "/reportes":
-            if not self.reporte_view.page_view.controls:
-                self.reporte_view.build()
-            self.body_container.content = self.reporte_view.page_view.controls[0]
         elif route == "/registro":
             if not self.registro_view.page_view.controls:
                 self.registro_view.build()
             self.body_container.content = self.registro_view.page_view.controls[0]
+        elif route == "/reportes":
+            if not self.reporte_view.page_view.controls:
+                self.reporte_view.build()
+            self.body_container.content = self.reporte_view.page_view.controls[0]
         else:
             self.body_container.content = self.home_view
 
