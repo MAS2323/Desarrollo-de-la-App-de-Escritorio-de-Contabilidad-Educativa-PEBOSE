@@ -1,5 +1,5 @@
 import flet as ft
-from services.persona_service import create_persona, get_personas, update_persona, delete_persona, NivelEducativo
+from services.persona_service import create_persona, get_personas, update_persona, delete_persona, NivelEducativo, calcular_saldo_pendiente
 from sqlalchemy.orm import Session
 from models.persona import Persona
 
@@ -7,7 +7,7 @@ class RegistroView:
     def __init__(self, page: ft.Page, db: Session):
         self.page = page
         self.db = db
-        self.page_view = ft.View("/registro", controls=[])  # Fix: Crea page_view en __init__
+        self.page_view = ft.View("/registro", controls=[])
 
     def build(self):
         self.tabla_personas = ft.DataTable(
@@ -17,6 +17,7 @@ class RegistroView:
                 ft.DataColumn(ft.Text("Apellidos")),
                 ft.DataColumn(ft.Text("Tipo")),
                 ft.DataColumn(ft.Text("Nivel Educativo")),
+                ft.DataColumn(ft.Text("Saldo Pendiente (FCFA)")),  # Nueva columna coloreada
                 ft.DataColumn(ft.Text("Acciones"))
             ],
             rows=[]
@@ -40,11 +41,14 @@ class RegistroView:
             if not all([nombre_field.value, apellidos_field.value, tipo_dropdown.value, nivel_dropdown.value]):
                 self.page.show_snack_bar(ft.SnackBar(ft.Text("Completa todos los campos"), bgcolor=ft.colors.RED))
                 return
-            create_persona(self.db, nombre_field.value, apellidos_field.value, tipo_dropdown.value, nivel_dropdown.value)
-            self.page.show_snack_bar(ft.SnackBar(ft.Text("Persona registrada"), bgcolor=ft.colors.GREEN))
-            nombre_field.value = apellidos_field.value = ""
-            tipo_dropdown.value = nivel_dropdown.value = None
-            self.cargar_personas()
+            try:
+                create_persona(self.db, nombre_field.value, apellidos_field.value, tipo_dropdown.value, nivel_dropdown.value)
+                self.page.show_snack_bar(ft.SnackBar(ft.Text("Persona registrada"), bgcolor=ft.colors.GREEN))
+                nombre_field.value = apellidos_field.value = ""
+                tipo_dropdown.value = nivel_dropdown.value = None
+                self.cargar_personas()
+            except ValueError as ve:
+                self.page.show_snack_bar(ft.SnackBar(ft.Text(str(ve)), bgcolor=ft.colors.RED))
 
         btn_agregar = ft.ElevatedButton("Registrar Persona", on_click=agregar_persona)
         
@@ -68,7 +72,6 @@ class RegistroView:
             spacing=20
         )
 
-        # Asigna a page_view.controls (Fix AttributeError)
         self.page_view.controls = [layout]
         self.page_view.scroll = ft.ScrollMode.AUTO
 
@@ -76,6 +79,12 @@ class RegistroView:
         personas = get_personas(self.db)
         self.tabla_personas.rows.clear()
         for p in personas:
+            # Cálculo de saldo pendiente total (suma de pendientes por tipo)
+            saldos = calcular_saldo_pendiente(self.db, p.id)
+            saldo_total = sum(s['pendiente'] for s in saldos.values())
+            saldo_color = ft.colors.GREEN if saldo_total == 0 else ft.colors.RED  # Verde si pagado, rojo si pendiente
+            saldo_text = ft.Text(str(saldo_total), color=saldo_color, weight=ft.FontWeight.BOLD) if saldo_total > 0 else ft.Text("Pagado", color=ft.colors.GREEN)
+
             btn_edit = ft.IconButton(ft.icons.EDIT, on_click=lambda e, pid=p.id: self.edit_persona(pid))
             btn_delete = ft.IconButton(ft.icons.DELETE, on_click=lambda e, pid=p.id: self.delete_persona(pid))
             self.tabla_personas.rows.append(ft.DataRow(cells=[
@@ -84,6 +93,7 @@ class RegistroView:
                 ft.DataCell(ft.Text(p.apellidos)),
                 ft.DataCell(ft.Text(p.tipo)),
                 ft.DataCell(ft.Text(p.nivel_educativo.value)),
+                ft.DataCell(saldo_text),  # Nueva columna coloreada
                 ft.DataCell(ft.Row([btn_edit, btn_delete]))
             ]))
         self.page.update()
@@ -97,10 +107,13 @@ class RegistroView:
             nivel_edit = ft.Dropdown(value=p.nivel_educativo.value, options=[ft.dropdown.Option(n.value) for n in NivelEducativo])
             
             def guardar(e):
-                update_persona(self.db, pid, nombre_edit.value, apellidos_edit.value, tipo_edit.value, nivel_edit.value)
-                self.page.close(dialog)
-                self.page.show_snack_bar(ft.SnackBar(ft.Text("Persona actualizada"), bgcolor=ft.colors.GREEN))
-                self.cargar_personas()
+                try:
+                    update_persona(self.db, pid, nombre_edit.value, apellidos_edit.value, tipo_edit.value, nivel_edit.value)
+                    self.page.close(dialog)
+                    self.page.show_snack_bar(ft.SnackBar(ft.Text("Persona actualizada"), bgcolor=ft.colors.GREEN))
+                    self.cargar_personas()
+                except ValueError as ve:
+                    self.page.show_snack_bar(ft.SnackBar(ft.Text(str(ve)), bgcolor=ft.colors.RED))
             
             dialog = ft.AlertDialog(
                 title=ft.Text("Editar Persona"),
@@ -111,10 +124,13 @@ class RegistroView:
 
     def delete_persona(self, pid):
         def confirmar(e):
-            delete_persona(self.db, pid)
-            self.page.close(dialog)
-            self.page.show_snack_bar(ft.SnackBar(ft.Text("Persona eliminada"), bgcolor=ft.colors.ORANGE))
-            self.cargar_personas()
+            try:
+                delete_persona(self.db, pid)
+                self.page.close(dialog)
+                self.page.show_snack_bar(ft.SnackBar(ft.Text("Persona eliminada"), bgcolor=ft.colors.ORANGE))
+                self.cargar_personas()
+            except Exception as ex:
+                self.page.show_snack_bar(ft.SnackBar(ft.Text(f"Error: {ex}"), bgcolor=ft.colors.RED))
         
         dialog = ft.AlertDialog(
             title=ft.Text("Confirmar"),
